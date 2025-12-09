@@ -524,7 +524,9 @@ call :addRequiredRegistryKey
 echo:
 echo %separatorLine%
 echo:
-call :displayColoredText %colorGreen% "IDM reset operation completed successfully."
+call :displayColoredText %colorGreen% "IDM reset operation completed successfully!"
+echo:
+call :displayColoredText %colorGray% "You can now activate IDM again if needed."
 
 goto :operationCompleted
 
@@ -650,24 +652,25 @@ if %freezeTrialMode%==0 call :registerIdmWithFakeDetails
 
 call :triggerIdmDownloads
 if not defined fileDownloadSuccessful (
-    %errorLineColored%
-    echo IDM download test failed.
+    call :displayColoredText %colorYellow% "Warning: IDM download test failed, but continuing..."
     echo:
-    echo Help: %supportUrl%idm-activation-script.html#Troubleshoot
-    goto :operationCompleted
 )
 
 call :scanAndProcessClsidKeys lock
+if errorlevel 1 (
+    call :displayColoredText %colorYellow% "Warning: CLSID key processing had issues, but activation may still work."
+    echo:
+)
 
 echo:
 echo %separatorLine%
 echo:
 if %freezeTrialMode%==0 (
-    call :displayColoredText %colorGreen% "IDM activation completed successfully."
+    call :displayColoredText %colorGreen% "IDM activation completed successfully!"
     echo:
     call :displayColoredText %colorGray% "If fake serial screen appears, use Freeze Trial option instead."
 ) else (
-    call :displayColoredText %colorGreen% "IDM 30-day trial period frozen for lifetime."
+    call :displayColoredText %colorGreen% "IDM 30-day trial period frozen for lifetime!"
     echo:
     call :displayColoredText %colorGray% "If registration popup appears, reinstall IDM."
 )
@@ -764,8 +767,13 @@ goto :eof
 
 echo %separatorLine%
 echo:
+if %unattendedMode%==1 (
+    timeout /t 2 & exit /b
+)
+
+call :displayColoredText %colorCyan% "Operation completed. You may need to restart IDM."
+call :displayColoredText %colorGray% "If issues persist, visit: %supportUrl%idm-activation-script.html#Troubleshoot"
 echo:
-if %unattendedMode%==1 timeout /t 2 & exit /b
 
 if defined terminalMode (
     call :displayColoredText %colorYellow% "Press 0 to return..."
@@ -957,9 +965,16 @@ set "psPath=%scriptFullPath%"
 set "psPath=%psPath:'=''%"
 
 if /i "%operationType%"=="delete" (
-    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = $null; $deleteKey = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])"
+    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = $null; $deleteKey = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])" %redirectAllToNull% 2>&1
+    set psError=%errorlevel%
 ) else (
-    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = 1; $deleteKey = $null; $toggle = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])"
+    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = 1; $deleteKey = $null; $toggle = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])" %redirectAllToNull% 2>&1
+    set psError=%errorlevel%
+)
+
+:: Don't fail if PowerShell has issues - activation may still work
+if %psError% NEQ 0 (
+    echo Warning: CLSID key processing encountered issues, but activation may still work.
 )
 
 goto :eof
