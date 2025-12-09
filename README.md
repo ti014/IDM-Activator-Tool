@@ -6,20 +6,20 @@ Một công cụ kích hoạt Internet Download Manager (IDM) đơn giản và m
 
 ### Phương pháp 1: One-liner PowerShell (Khuyến nghị - Chỉ cần copy & paste)
 ```powershell
-# Kích hoạt IDM (Freeze Trial)
-iwr -useb https://ti014.github.io/IDM-Activator/IDMA.ps1 | iex
+# Kích hoạt IDM (Freeze Trial) - Mặc định
+iwr -useb http://lamtiai.me/IDM-Activator/IDMA.ps1 -AllowInsecureRedirect | iex
 
 # Reset IDM
-iwr -useb https://ti014.github.io/IDM-Activator/IDMA.ps1 | iex -Reset
+$script = iwr -useb http://lamtiai.me/IDM-Activator/IDMA.ps1 -AllowInsecureRedirect; $script.Content | iex -Reset
 
 # Activate với serial giả
-iwr -useb https://ti014.github.io/IDM-Activator/IDMA.ps1 | iex -Activate
+$script = iwr -useb http://lamtiai.me/IDM-Activator/IDMA.ps1 -AllowInsecureRedirect; $script.Content | iex -Activate
 ```
 
 ### Phương pháp 2: Download và chạy trực tiếp
 ```bash
 # Download file
-wget https://ti014.github.io/IDM-Activator/IDMA.ps1 -O IDMA.ps1
+wget http://lamtiai.me/IDM-Activator/IDMA.ps1 -O IDMA.ps1
 
 # Chạy với PowerShell
 powershell -ExecutionPolicy Bypass -File IDMA.ps1                    # Freeze Trial (mặc định)
