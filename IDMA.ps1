@@ -289,7 +289,7 @@ function Register-IDM {
 
 function Trigger-Downloads {
     Write-Color "Triggering downloads to create registry keys..." "Cyan"
-    Write-Color "Note: This downloads 3 small files (~30KB total) to trigger IDM registry creation." "Gray"
+    Write-Color "Note: This triggers IDM to download 3 small files (~30KB total) to create registry keys." "Gray"
     Write-Color "Files will be automatically deleted after completion." "Gray"
 
     $tempFile = "$env:SystemRoot\Temp\temp.png"
@@ -305,16 +305,36 @@ function Trigger-Downloads {
         return
     }
 
+    # Clean up any existing temp file
+    if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
+
+    # Trigger downloads without waiting (non-blocking)
     foreach ($url in $urls) {
-        if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
-        Start-Process -FilePath $idmPath -ArgumentList "/n", "/d", "`"$url`"", "/p", "`"$env:SystemRoot\Temp`"", "/f", "temp.png" -Wait -WindowStyle Hidden
-        Start-Sleep -Seconds 1
+        try {
+            # Start download process without waiting
+            Start-Process -FilePath $idmPath -ArgumentList "/n", "/d", "`"$url`"", "/p", "`"$env:SystemRoot\Temp`"", "/f", "temp.png" -WindowStyle Hidden -ErrorAction SilentlyContinue
+            Start-Sleep -Milliseconds 500
+        } catch {
+            Write-Color "Warning: Could not trigger download for $url" "Yellow"
+        }
     }
 
-    # Clean up
+    # Wait a bit for IDM to process the downloads
+    Write-Color "Waiting for IDM to process downloads..." "Gray"
+    Start-Sleep -Seconds 3
+
+    # Clean up IDM processes and temp files
     Stop-Process -Name "idman" -Force -ErrorAction SilentlyContinue
-    if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
-    Write-Color "Downloads completed and cleaned up." "Green"
+    Start-Sleep -Seconds 1
+    
+    # Ensure all IDM processes are killed
+    Get-Process -Name "idman" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    
+    if (Test-Path $tempFile) { 
+        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue 
+    }
+    
+    Write-Color "Downloads triggered and cleaned up." "Green"
 }
 
 # Main execution
