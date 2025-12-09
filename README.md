@@ -4,40 +4,33 @@ Một công cụ kích hoạt Internet Download Manager (IDM) đơn giản và m
 
 ## Cách sử dụng
 
-### Phương pháp 1: One-liner PowerShell (Khuyến nghị - Chỉ cần copy & paste)
+### 🚀 **CHỈ CẦN 1 LỆNH DUY NHẤT:**
+
 ```powershell
-# Kích hoạt IDM (Freeze Trial) - Mặc định
 iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1 | iex
-
-# Reset IDM
-& { $script = iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1; Invoke-Expression $script.Content -Reset }
-
-# Activate với serial giả
-& { $script = iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1; Invoke-Expression $script.Content -Activate }
 ```
 
-### Phương pháp 2: Download và chạy trực tiếp
-```bash
-# Download file
-wget https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1 -O IDMA.ps1
+**Copy & paste lệnh trên vào PowerShell với quyền Administrator và nhấn Enter!**
 
-# Chạy với PowerShell
-powershell -ExecutionPolicy Bypass -File IDMA.ps1                    # Freeze Trial (mặc định)
-powershell -ExecutionPolicy Bypass -File IDMA.ps1 -Freeze           # Freeze Trial
-powershell -ExecutionPolicy Bypass -File IDMA.ps1 -Activate         # Activate với serial giả
-powershell -ExecutionPolicy Bypass -File IDMA.ps1 -Reset            # Reset IDM
+---
+
+### 📋 **Chi tiết (cho người tò mò):**
+
+Script sẽ tự động:
+- ✅ Phát hiện và đóng IDM nếu đang chạy
+- ✅ Backup registry trước khi thay đổi
+- ✅ Freeze trial IDM vĩnh viễn (không cần activate phức tạp)
+- ✅ Thông báo kết quả chi tiết
+
+### 🎯 **Nếu cần tùy chọn khác:**
+
+```powershell
+# Reset IDM về trạng thái ban đầu
+iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1 | iex -Reset
+
+# Activate với serial giả (ít ổn định hơn)
+iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1 | iex -Activate
 ```
-
-### Phương pháp 3: Batch Script (Dễ sử dụng nhất cho người mới)
-```batch
-# Download file CMD và chạy bằng chuột phải → "Run as administrator"
-# File sẽ tự động phát hiện và thực hiện kích hoạt
-```
-
-**Hướng dẫn chi tiết:**
-1. Download file `IDMA.cmd` từ repository
-2. Chuột phải vào file → Chọn **"Run as administrator"**
-3. Script sẽ tự động thực hiện kích hoạt IDM
 
 ## Tính năng
 
