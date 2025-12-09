@@ -255,6 +255,8 @@ function Register-IDM {
 
 function Trigger-Downloads {
     Write-Color "Triggering downloads to create registry keys..." "Cyan"
+    Write-Color "Note: This downloads 3 small files (~30KB total) to trigger IDM registry creation." "Gray"
+    Write-Color "Files will be automatically deleted after completion." "Gray"
 
     $tempFile = "$env:SystemRoot\Temp\temp.png"
     $urls = @(
@@ -264,19 +266,21 @@ function Trigger-Downloads {
     )
 
     if (-not $idmPath) {
-        Write-Color "IDM executable not found. Cannot trigger downloads." "Red"
+        Write-Color "IDM executable not found. Skipping downloads." "Yellow"
+        Write-Color "Activation may still work, but some registry keys might be missing." "Yellow"
         return
     }
 
     foreach ($url in $urls) {
         if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
-        Start-Process -FilePath $idmPath -ArgumentList "/n", "/d", "`"$url`"", "/p", "`"$env:SystemRoot\Temp`"", "/f", "temp.png" -Wait
-        Start-Sleep -Seconds 2
+        Start-Process -FilePath $idmPath -ArgumentList "/n", "/d", "`"$url`"", "/p", "`"$env:SystemRoot\Temp`"", "/f", "temp.png" -Wait -WindowStyle Hidden
+        Start-Sleep -Seconds 1
     }
 
     # Clean up
     Stop-Process -Name "idman" -Force -ErrorAction SilentlyContinue
     if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
+    Write-Color "Downloads completed and cleaned up." "Green"
 }
 
 # Main execution
@@ -312,6 +316,7 @@ if ($Reset) {
         Trigger-Downloads
     } else {
         Write-Color "Skipping downloads (using -SkipDownloads parameter)" "Yellow"
+        Write-Color "Note: Activation may still work, but IDM will create registry keys when you download files normally." "Gray"
     }
     Process-CLSIDKeys
     Write-Color "IDM Activation completed!" "Green"
@@ -323,6 +328,7 @@ if ($Reset) {
         Trigger-Downloads
     } else {
         Write-Color "Skipping downloads (using -SkipDownloads parameter)" "Yellow"
+        Write-Color "Note: Activation may still work, but IDM will create registry keys when you download files normally." "Gray"
     }
     Process-CLSIDKeys
     Write-Color "IDM Trial frozen for lifetime!" "Green"
@@ -335,6 +341,7 @@ if ($Reset) {
         Trigger-Downloads
     } else {
         Write-Color "Skipping downloads (using -SkipDownloads parameter)" "Yellow"
+        Write-Color "Note: Activation may still work, but IDM will create registry keys when you download files normally." "Gray"
     }
     Process-CLSIDKeys
     Write-Color "IDM Trial frozen for lifetime!" "Green"

@@ -23,7 +23,12 @@ Script sẽ tự động:
 - ✅ Trigger downloads nhỏ để tạo registry keys cần thiết (tự động xóa sau)
 - ✅ Thông báo kết quả chi tiết
 
-**Lưu ý:** Script sẽ tự động tải 3 file nhỏ từ IDM website để trigger registry keys. Đây là cần thiết cho quá trình kích hoạt. Files sẽ tự động bị xóa sau khi hoàn thành.
+**Lưu ý về Downloads:**
+- Script sẽ tự động tải 3 file nhỏ (~30KB tổng cộng) từ IDM website
+- **Mục đích:** Trigger IDM để tạo các registry keys cần thiết cho activation
+- **Có bắt buộc không?** Không hoàn toàn bắt buộc, nhưng khuyến nghị để đảm bảo activation hoạt động tốt nhất
+- Files sẽ tự động bị xóa sau khi hoàn thành
+- Nếu không muốn tải, dùng `-SkipDownloads` (activation vẫn có thể hoạt động nhưng có thể thiếu một số keys)
 
 ### 🎯 **Nếu cần tùy chọn khác:**
 
