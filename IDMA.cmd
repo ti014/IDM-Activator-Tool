@@ -236,11 +236,7 @@ goto :eof
 :validatePowerShellAndPrivileges
 REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
 
-:: Use scriptFullPath directly with proper escaping
-set "psTestPath=%scriptFullPath%"
-set "psTestPath=%psTestPath:'=''%"
-
-%powershellExecutable% "$f=[io.file]::ReadAllText('%psTestPath%') -split ':PowerShellTest:\s*';iex ($f[1])" | find /i "FullLanguage" %redirectToNull1% || (
+%powershellExecutable% "$f=[io.file]::ReadAllText('!scriptPathForPS!') -split ':PowerShellTest:\s*';iex ($f[1])" | find /i "FullLanguage" %redirectToNull1% || (
     %errorLineColored%
     %powershellExecutable% $ExecutionContext.SessionState.LanguageMode
     echo:
@@ -514,55 +510,17 @@ if not %hkcuRegistrySync%==1 (
 if not defined terminalMode %powershellExecutable% "&%consoleBufferConfig%" %redirectToNull%
 
 echo:
-call :displayColoredText %colorCyan% "Stopping IDM processes..."
 %idmProcessCheck% && taskkill /f /im idman.exe
-if errorlevel 1 (
-    call :displayColoredText %colorYellow% "WARNING: No IDM processes found or failed to stop."
-) else (
-    call :displayColoredText %colorGreen% "SUCCESS: IDM processes stopped."
-)
-echo:
 
-call :displayColoredText %colorCyan% "Step 1/4: Creating registry backup..."
 call :createRegistryBackup
-if errorlevel 1 (
-    call :displayColoredText %colorYellow% "WARNING: Registry backup creation had issues, but continuing..."
-) else (
-    call :displayColoredText %colorGreen% "SUCCESS: Registry backup created."
-)
-echo:
-
-call :displayColoredText %colorCyan% "Step 2/4: Cleaning up IDM registry entries..."
 call :cleanupIdmRegistryEntries
-call :displayColoredText %colorGreen% "SUCCESS: IDM registry entries cleaned up."
-echo:
-
-call :displayColoredText %colorCyan% "Step 3/4: Deleting CLSID keys..."
 call :scanAndProcessClsidKeys delete
-if errorlevel 1 (
-    call :displayColoredText %colorYellow% "WARNING: CLSID key deletion had issues, but continuing..."
-) else (
-    call :displayColoredText %colorGreen% "SUCCESS: CLSID keys deleted."
-)
-echo:
-
-call :displayColoredText %colorCyan% "Step 4/4: Adding required registry key..."
 call :addRequiredRegistryKey
-if errorlevel 1 (
-    call :displayColoredText %colorRed% "ERROR: Failed to add required registry key!"
-    goto :exitWithError
-)
-call :displayColoredText %colorGreen% "SUCCESS: Required registry key added."
-echo:
 
 echo:
 echo %separatorLine%
 echo:
-call :displayColoredText %colorGreen% "=========================================="
-call :displayColoredText %colorGreen% "IDM RESET OPERATION COMPLETED SUCCESSFULLY!"
-call :displayColoredText %colorGreen% "=========================================="
-echo:
-call :displayColoredText %colorGray% "You can now activate IDM again if needed."
+call :displayColoredText %colorGreen% "IDM reset operation completed successfully."
 
 goto :operationCompleted
 
@@ -574,33 +532,13 @@ goto :operationCompleted
 
 :createRegistryBackup
 set timestamp=
-set backupSuccess=0
-
 for /f %%a in ('%powershellExecutable% "(Get-Date).ToString('yyyyMMdd-HHmmssfff')"') do set timestamp=%%a
 
-reg export %clsidRegistryPath% "%SystemRoot%\Temp\_Backup_HKCU_CLSID_%timestamp%.reg" 2>nul
-if errorlevel 1 (
-    call :displayColoredText %colorYellow% "WARNING: Failed to backup HKCU CLSID keys (key may not exist)."
-) else (
-    set backupSuccess=1
-    call :displayColoredText %colorGreen% "SUCCESS: HKCU CLSID backup created: _Backup_HKCU_CLSID_%timestamp%.reg"
-)
+echo:
+echo Creating backup of CLSID registry keys in %SystemRoot%\Temp
 
-if not %hkcuRegistrySync%==1 (
-    reg export %clsidRegistryPathHKU% "%SystemRoot%\Temp\_Backup_HKU-%userAccountSid%_CLSID_%timestamp%.reg" 2>nul
-    if errorlevel 1 (
-        call :displayColoredText %colorYellow% "WARNING: Failed to backup HKU CLSID keys (key may not exist)."
-    ) else (
-        set backupSuccess=1
-        call :displayColoredText %colorGreen% "SUCCESS: HKU CLSID backup created: _Backup_HKU-%userAccountSid%_CLSID_%timestamp%.reg"
-    )
-)
-
-if %backupSuccess%==1 (
-    exit /b 0
-) else (
-    exit /b 1
-)
+reg export %clsidRegistryPath% "%SystemRoot%\Temp\_Backup_HKCU_CLSID_%timestamp%.reg"
+if not %hkcuRegistrySync%==1 reg export %clsidRegistryPathHKU% "%SystemRoot%\Temp\_Backup_HKU-%userAccountSid%_CLSID_%timestamp%.reg"
 
 goto :eof
 
@@ -696,103 +634,36 @@ if not %hkcuRegistrySync%==1 (
 if not defined terminalMode %powershellExecutable% "&%consoleBufferConfig%" %redirectToNull%
 
 call :showActivationWarning
-
-call :displayColoredText %colorCyan% "Step 1/7: Verifying IDM installation..."
 call :verifyIdmInstallation
-if errorlevel 1 (
-    call :displayColoredText %colorRed% "ERROR: IDM installation verification failed!"
-    goto :exitWithError
-)
-call :displayColoredText %colorGreen% "SUCCESS: IDM installation verified."
-echo:
-
-call :displayColoredText %colorCyan% "Step 2/7: Checking internet connectivity..."
 call :checkInternetConnectivity
-if errorlevel 1 (
-    call :displayColoredText %colorYellow% "WARNING: Internet connectivity check failed, but continuing..."
-)
-call :displayColoredText %colorGreen% "SUCCESS: Internet connectivity check completed."
-echo:
-
-call :displayColoredText %colorCyan% "Step 3/7: Displaying system information..."
 call :displaySystemInformation
-call :displayColoredText %colorGreen% "SUCCESS: System information displayed."
-echo:
-
-call :displayColoredText %colorCyan% "Step 4/7: Creating registry backup..."
 call :createRegistryBackup
-if errorlevel 1 (
-    call :displayColoredText %colorYellow% "WARNING: Registry backup creation had issues, but continuing..."
-) else (
-    call :displayColoredText %colorGreen% "SUCCESS: Registry backup created."
-)
-echo:
-
-call :displayColoredText %colorCyan% "Step 5/7: Cleaning up IDM registry entries..."
 call :cleanupIdmRegistryEntries
-call :displayColoredText %colorGreen% "SUCCESS: IDM registry entries cleaned up."
-echo:
-
-call :displayColoredText %colorCyan% "Step 6/7: Adding required registry key..."
 call :addRequiredRegistryKey
-if errorlevel 1 (
-    call :displayColoredText %colorRed% "ERROR: Failed to add required registry key!"
-    goto :exitWithError
-)
-call :displayColoredText %colorGreen% "SUCCESS: Required registry key added."
-echo:
-
-call :displayColoredText %colorCyan% "Step 7/7: Processing CLSID keys..."
 call :scanAndProcessClsidKeys lock
-if errorlevel 1 (
-    call :displayColoredText %colorYellow% "WARNING: CLSID key processing had issues, but continuing..."
-) else (
-    call :displayColoredText %colorGreen% "SUCCESS: CLSID keys processed."
-)
-echo:
 
-if %freezeTrialMode%==0 (
-    call :displayColoredText %colorCyan% "Registering IDM with fake details..."
-    call :registerIdmWithFakeDetails
-    if errorlevel 1 (
-        call :displayColoredText %colorYellow% "WARNING: Fake registration had issues, but continuing..."
-    ) else (
-        call :displayColoredText %colorGreen% "SUCCESS: Fake registration completed."
-    )
-    echo:
-)
+if %freezeTrialMode%==0 call :registerIdmWithFakeDetails
 
-call :displayColoredText %colorCyan% "Triggering IDM downloads to create registry keys..."
 call :triggerIdmDownloads
 if not defined fileDownloadSuccessful (
-    call :displayColoredText %colorYellow% "WARNING: IDM download test failed, but continuing..."
-) else (
-    call :displayColoredText %colorGreen% "SUCCESS: IDM downloads triggered."
+    %errorLineColored%
+    echo IDM download test failed.
+    echo:
+    echo Help: %supportUrl%idm-activation-script.html#Troubleshoot
+    goto :operationCompleted
 )
-echo:
 
-call :displayColoredText %colorCyan% "Finalizing CLSID key processing..."
 call :scanAndProcessClsidKeys lock
-if errorlevel 1 (
-    call :displayColoredText %colorYellow% "WARNING: Final CLSID key processing had issues, but activation may still work."
-) else (
-    call :displayColoredText %colorGreen% "SUCCESS: Final CLSID key processing completed."
-)
-echo:
 
 echo:
 echo %separatorLine%
 echo:
 if %freezeTrialMode%==0 (
-    call :displayColoredText %colorGreen% "=========================================="
-    call :displayColoredText %colorGreen% "IDM ACTIVATION COMPLETED SUCCESSFULLY!"
-    call :displayColoredText %colorGreen% "=========================================="
+    call :displayColoredText %colorGreen% "IDM activation completed successfully."
     echo:
     call :displayColoredText %colorGray% "If fake serial screen appears, use Freeze Trial option instead."
 ) else (
-    call :displayColoredText %colorGreen% "=========================================="
-    call :displayColoredText %colorGreen% "IDM TRIAL FROZEN FOR LIFETIME!"
-    call :displayColoredText %colorGreen% "=========================================="
+    call :displayColoredText %colorGreen% "IDM 30-day trial period frozen for lifetime."
     echo:
     call :displayColoredText %colorGray% "If registration popup appears, reinstall IDM."
 )
@@ -889,13 +760,8 @@ goto :eof
 
 echo %separatorLine%
 echo:
-if %unattendedMode%==1 (
-    timeout /t 2 & exit /b
-)
-
-call :displayColoredText %colorCyan% "Operation completed. You may need to restart IDM."
-call :displayColoredText %colorGray% "If issues persist, visit: %supportUrl%idm-activation-script.html#Troubleshoot"
 echo:
+if %unattendedMode%==1 timeout /t 2 & exit /b
 
 if defined terminalMode (
     call :displayColoredText %colorYellow% "Press 0 to return..."
@@ -963,7 +829,9 @@ goto :eof
 :: Purpose: Register IDM with randomly generated fake user details and serial
 
 :registerIdmWithFakeDetails
-set registrationSuccess=1
+echo:
+echo Applying fake registration details...
+echo:
 
 set /a fakeFirstName = %random% %% 9999 + 1000
 set /a fakeLastName = %random% %% 9999 + 1000
@@ -972,29 +840,15 @@ set fakeEmail=%fakeFirstName%.%fakeLastName%@tonec.com
 for /f "delims=" %%a in ('%powershellExecutable% "$key = -join ((Get-Random -Count  20 -InputObject ([char[]]('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'))));$key = ($key.Substring(0,  5) + '-' + $key.Substring(5,  5) + '-' + $key.Substring(10,  5) + '-' + $key.Substring(15,  5) + $key.Substring(20));Write-Output $key" %redirectToNull6%') do (set fakeSerialKey=%%a)
 
 set "registryEntry=HKCU\SOFTWARE\DownloadManager /v FName /t REG_SZ /d "%fakeFirstName%"" & call :addRegistryEntry
-if errorlevel 1 set registrationSuccess=0
 set "registryEntry=HKCU\SOFTWARE\DownloadManager /v LName /t REG_SZ /d "%fakeLastName%"" & call :addRegistryEntry
-if errorlevel 1 set registrationSuccess=0
 set "registryEntry=HKCU\SOFTWARE\DownloadManager /v Email /t REG_SZ /d "%fakeEmail%"" & call :addRegistryEntry
-if errorlevel 1 set registrationSuccess=0
 set "registryEntry=HKCU\SOFTWARE\DownloadManager /v Serial /t REG_SZ /d "%fakeSerialKey%"" & call :addRegistryEntry
-if errorlevel 1 set registrationSuccess=0
 
 if not %hkcuRegistrySync%==1 (
     set "registryEntry=HKU\%userAccountSid%\SOFTWARE\DownloadManager /v FName /t REG_SZ /d "%fakeFirstName%"" & call :addRegistryEntry
-    if errorlevel 1 set registrationSuccess=0
     set "registryEntry=HKU\%userAccountSid%\SOFTWARE\DownloadManager /v LName /t REG_SZ /d "%fakeLastName%"" & call :addRegistryEntry
-    if errorlevel 1 set registrationSuccess=0
     set "registryEntry=HKU\%userAccountSid%\SOFTWARE\DownloadManager /v Email /t REG_SZ /d "%fakeEmail%"" & call :addRegistryEntry
-    if errorlevel 1 set registrationSuccess=0
     set "registryEntry=HKU\%userAccountSid%\SOFTWARE\DownloadManager /v Serial /t REG_SZ /d "%fakeSerialKey%"" & call :addRegistryEntry
-    if errorlevel 1 set registrationSuccess=0
-)
-
-if %registrationSuccess%==1 (
-    exit /b 0
-) else (
-    exit /b 1
 )
 
 goto :eof
@@ -1006,36 +860,24 @@ goto :eof
 :: Purpose: Trigger downloads through IDM to create necessary registry keys
 
 :triggerIdmDownloads
+echo:
+echo Triggering downloads to create required registry keys, please wait...
+echo:
+
 set "tempDownloadFile=%SystemRoot%\Temp\temp.png"
 set fileDownloadSuccessful=
-set downloadSuccessCount=0
 
 set downloadUrl=https://www.internetdownloadmanager.com/images/idm_box_min.png
 call :performIdmDownload
-if defined fileDownloadSuccessful set /a downloadSuccessCount+=1
-set fileDownloadSuccessful=
-
 set downloadUrl=https://www.internetdownloadmanager.com/register/IDMlib/images/idman_logos.png
 call :performIdmDownload
-if defined fileDownloadSuccessful set /a downloadSuccessCount+=1
-set fileDownloadSuccessful=
-
 set downloadUrl=https://www.internetdownloadmanager.com/pictures/idm_about.png
 call :performIdmDownload
-if defined fileDownloadSuccessful set /a downloadSuccessCount+=1
 
 echo:
 timeout /t 3 %redirectToNull1%
 %idmProcessCheck% && taskkill /f /im idman.exe
 if exist "%tempDownloadFile%" del /f /q "%tempDownloadFile%"
-
-if %downloadSuccessCount% GEQ 1 (
-    set fileDownloadSuccessful=1
-    exit /b 0
-) else (
-    set fileDownloadSuccessful=
-    exit /b 1
-)
 
 goto :eof
 
@@ -1064,13 +906,7 @@ goto :waitForDownloadCompletion
 :: Purpose: Add a registry entry and handle the operation result
 
 :addRegistryEntry
-reg add %registryEntry% /f %redirectToNull% 2>&1
-
-if errorlevel 1 (
-    exit /b 1
-) else (
-    exit /b 0
-)
+reg add %registryEntry% /f %redirectToNull%
 
 goto :eof
 
@@ -1081,18 +917,20 @@ goto :eof
 :: Purpose: Add required registry key for IDM functionality
 
 :addRequiredRegistryKey
+echo:
+echo Adding required registry key...
+echo:
+
 set "requiredRegistryKey="%idmRegistryPath%" /v "AdvIntDriverEnabled2""
 
-reg add %requiredRegistryKey% /t REG_DWORD /d "1" /f %redirectToNull% 2>&1
+reg add %requiredRegistryKey% /t REG_DWORD /d "1" /f %redirectToNull%
 
-if errorlevel 1 (
+if "%errorlevel%"=="0" (
     set "reg=%requiredRegistryKey:"=%
-    call :displayColoredText %colorRed% "ERROR: Failed to add registry key: !reg!"
-    exit /b 1
+    echo Added - !reg!
 ) else (
     set "reg=%requiredRegistryKey:"=%
-    call :displayColoredText %colorGreen% "SUCCESS: Registry key added: !reg!"
-    exit /b 0
+    call :displayColoredText2 %colorRed% "Failed - !reg!"
 )
 
 goto :eof
@@ -1115,18 +953,9 @@ set "psPath=%scriptFullPath%"
 set "psPath=%psPath:'=''%"
 
 if /i "%operationType%"=="delete" (
-    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = $null; $deleteKey = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])" %redirectAllToNull% 2>&1
-    set psError=%errorlevel%
+    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = $null; $deleteKey = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])"
 ) else (
-    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = 1; $deleteKey = $null; $toggle = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])" %redirectAllToNull% 2>&1
-    set psError=%errorlevel%
-)
-
-:: Return errorlevel based on PowerShell execution result
-if %psError% NEQ 0 (
-    exit /b 1
-) else (
-    exit /b 0
+    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = 1; $deleteKey = $null; $toggle = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])"
 )
 
 goto :eof
@@ -1317,26 +1146,6 @@ foreach ($regPath in $regPaths) {
     }
 }
 :regscan:
-
-::========================================================================================================================================
-
-:_color
-
-if %_NCS% EQU 1 (
-echo %esc%[%~1%~2%esc%[0m
-) else (
-%psc% write-host -back '%1' -fore '%2' '%3'
-)
-exit /b
-
-:_color2
-
-if %_NCS% EQU 1 (
-echo %esc%[%~1%~2%esc%[%~3%~4%esc%[0m
-) else (
-%psc% write-host -back '%1' -fore '%2' '%3' -NoNewline; write-host -back '%4' -fore '%5' '%6'
-)
-exit /b
 
 ::========================================================================================================================================
 :: Leave empty line below
