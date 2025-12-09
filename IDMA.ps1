@@ -9,10 +9,13 @@ param(
 )
 
 # Support environment variables for one-liner usage
-if ($env:IDMA_RESET -eq "1") { $Reset = $true }
-if ($env:IDMA_FREEZE -eq "1") { $Freeze = $true }
-if ($env:IDMA_ACTIVATE -eq "1") { $Activate = $true }
-if ($env:IDMA_SKIP_DOWNLOADS -eq "1") { $SkipDownloads = $true }
+# Check environment variables before param() values to allow override
+if ($env:IDMA_RESET -eq "1" -or $env:IDMA_RESET -eq 1) { $Reset = $true }
+if ($env:IDMA_FREEZE -eq "1" -or $env:IDMA_FREEZE -eq 1) { $Freeze = $true }
+if ($env:IDMA_ACTIVATE -eq "1" -or $env:IDMA_ACTIVATE -eq 1) { $Activate = $true }
+if ($env:IDMA_SKIP_DOWNLOADS -eq "1" -or $env:IDMA_SKIP_DOWNLOADS -eq 1 -or $env:IDMA_SKIP_DOWNLOADS -eq "true") { 
+    $SkipDownloads = $true 
+}
 
 # Configuration
 $scriptVersion = "1.2"
@@ -357,6 +360,14 @@ function Trigger-Downloads {
 }
 
 # Main execution
+# Re-check environment variables after script load (for pipeline execution)
+if ($env:IDMA_RESET -eq "1" -or $env:IDMA_RESET -eq 1) { $Reset = $true }
+if ($env:IDMA_FREEZE -eq "1" -or $env:IDMA_FREEZE -eq 1) { $Freeze = $true }
+if ($env:IDMA_ACTIVATE -eq "1" -or $env:IDMA_ACTIVATE -eq 1) { $Activate = $true }
+if ($env:IDMA_SKIP_DOWNLOADS -eq "1" -or $env:IDMA_SKIP_DOWNLOADS -eq 1 -or $env:IDMA_SKIP_DOWNLOADS -eq "true") { 
+    $SkipDownloads = $true 
+}
+
 Write-Color "==========================================" "Cyan"
 Write-Color "       IDM Activator v$scriptVersion" "Cyan"
 Write-Color "==========================================" "Cyan"
@@ -410,6 +421,13 @@ if ($Reset) {
     Write-Color "No parameter specified. Defaulting to Freeze Trial..." "Yellow"
     Stop-Process -Name "idman" -Force -ErrorAction SilentlyContinue
     Backup-Registry
+    
+    # Debug: Check SkipDownloads value
+    if ($env:IDMA_SKIP_DOWNLOADS) {
+        Write-Color "Debug: IDMA_SKIP_DOWNLOADS env var = $($env:IDMA_SKIP_DOWNLOADS)" "Gray"
+    }
+    Write-Color "Debug: SkipDownloads variable = $SkipDownloads" "Gray"
+    
     if (-not $SkipDownloads) {
         Trigger-Downloads
     } else {
