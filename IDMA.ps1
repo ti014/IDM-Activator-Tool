@@ -421,13 +421,6 @@ if ($Reset) {
     Write-Color "No parameter specified. Defaulting to Freeze Trial..." "Yellow"
     Stop-Process -Name "idman" -Force -ErrorAction SilentlyContinue
     Backup-Registry
-    
-    # Debug: Check SkipDownloads value
-    if ($env:IDMA_SKIP_DOWNLOADS) {
-        Write-Color "Debug: IDMA_SKIP_DOWNLOADS env var = $($env:IDMA_SKIP_DOWNLOADS)" "Gray"
-    }
-    Write-Color "Debug: SkipDownloads variable = $SkipDownloads" "Gray"
-    
     if (-not $SkipDownloads) {
         Trigger-Downloads
     } else {

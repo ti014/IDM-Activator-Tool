@@ -32,29 +32,30 @@ Script sẽ tự động:
 
 ### 🎯 **Nếu cần tùy chọn khác:**
 
-**Cách 1: Dùng Environment Variables (One-liner)**
-```powershell
-# Reset IDM về trạng thái ban đầu
-$env:IDMA_RESET="1"; iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex
-
-# Activate với serial giả (ít ổn định hơn)
-$env:IDMA_ACTIVATE="1"; iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex
-
-# Bỏ qua phần trigger downloads (không khuyến nghị)
-$env:IDMA_SKIP_DOWNLOADS="1"; iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex
-```
-
-**Cách 2: Download về và chạy trực tiếp (Khuyến nghị)**
+**Cách đơn giản nhất: Download về và chạy trực tiếp (Khuyến nghị)**
 ```powershell
 # Download file
 iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 -OutFile IDMA.ps1
 
 # Chạy với tham số
-.\IDMA.ps1 -SkipDownloads
-.\IDMA.ps1 -Reset
-.\IDMA.ps1 -Activate
-.\IDMA.ps1 -Freeze
+.\IDMA.ps1                    # Freeze Trial (mặc định)
+.\IDMA.ps1 -SkipDownloads     # Bỏ qua downloads
+.\IDMA.ps1 -Reset             # Reset IDM
+.\IDMA.ps1 -Activate          # Activate với serial giả
+.\IDMA.ps1 -Freeze            # Freeze Trial (giống mặc định)
 ```
+
+**Cách 2: Dùng Environment Variables (One-liner - có thể không hoạt động với PowerShell 7)**
+```powershell
+# Set variable trước, sau đó chạy script
+$env:IDMA_SKIP_DOWNLOADS="1"
+iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex
+
+# Hoặc trong một dòng (PowerShell 5.1)
+$env:IDMA_SKIP_DOWNLOADS="1"; iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex
+```
+
+**Lưu ý:** Với PowerShell 7+, environment variables có thể không được truyền đúng qua pipeline. Nên download về và chạy trực tiếp để đảm bảo hoạt động.
 
 ## Tính năng
 
