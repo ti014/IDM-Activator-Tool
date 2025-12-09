@@ -19,7 +19,31 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 }
 
 # Get user SID
-$userSid = ([System.Security.Principal.NTAccount](Get-WmiObject -Class Win32_ComputerSystem).UserName).Translate([System.Security.Principal.SecurityIdentifier]).Value
+try {
+    $userSid = ([System.Security.Principal.NTAccount](Get-CimInstance -Class Win32_ComputerSystem).UserName).Translate([System.Security.Principal.SecurityIdentifier]).Value
+} catch {
+    # Fallback to WMI if CIM fails
+    $userSid = ([System.Security.Principal.NTAccount](Get-WmiObject -Class Win32_ComputerSystem).UserName).Translate([System.Security.Principal.SecurityIdentifier]).Value
+}
+
+# Check if HKCU syncs with HKU
+$hkcuSync = $null
+try {
+    Remove-Item -Path "HKCU:\IAS_TEST" -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path "Registry::HKEY_USERS\$userSid\IAS_TEST" -Force -ErrorAction SilentlyContinue
+    
+    New-Item -Path "HKCU:\IAS_TEST" -Force -ErrorAction SilentlyContinue | Out-Null
+    if (Test-Path "Registry::HKEY_USERS\$userSid\IAS_TEST") {
+        $hkcuSync = $true
+    } else {
+        $hkcuSync = $false
+    }
+    
+    Remove-Item -Path "HKCU:\IAS_TEST" -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path "Registry::HKEY_USERS\$userSid\IAS_TEST" -Force -ErrorAction SilentlyContinue
+} catch {
+    $hkcuSync = $false
+}
 
 # Detect architecture
 $arch = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment').PROCESSOR_ARCHITECTURE
@@ -90,8 +114,8 @@ function Backup-Registry {
         Write-Color "Warning: Could not backup registry (this is usually safe to ignore)" "Yellow"
     }
     
-    # Backup HKU path if different
-    if ($clsidPathHKU -and ($clsidPathHKU -ne $clsidPath)) {
+    # Backup HKU path if not synced with HKCU
+    if (($hkcuSync -eq $false) -and $clsidPathHKU) {
         $regPathHKU = $clsidPathHKU -replace "Registry::HKEY_USERS", "HKEY_USERS"
         $backupPathHKU = "$env:SystemRoot\Temp\_Backup_IDM_HKU_$timestamp.reg"
         try {
@@ -143,7 +167,7 @@ function Process-CLSIDKeys {
     $regPaths = @($clsidPath, $clsidPathHKU)
 
     foreach ($regPath in $regPaths) {
-        if ($regPath -match "HKEY_USERS" -and (Test-Path "HKCU:\IAS_TEST")) {
+        if (($regPath -match "HKEY_USERS") -and ($hkcuSync -eq $true)) {
             continue
         }
 
@@ -238,7 +262,7 @@ function Register-IDM {
     $serialKey = -join ((Get-Random -Count 20 -InputObject ([char[]]('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'))))
     $serialKey = ($serialKey.Substring(0, 5) + '-' + $serialKey.Substring(5, 5) + '-' + $serialKey.Substring(10, 5) + '-' + $serialKey.Substring(15, 5) + $serialKey.Substring(20))
 
-    # Set registry values
+    # Set registry values for HKCU
     $regEntries = @(
         @{Path="HKCU:\SOFTWARE\DownloadManager"; Name="FName"; Value=$firstName},
         @{Path="HKCU:\SOFTWARE\DownloadManager"; Name="LName"; Value=$lastName},
@@ -250,6 +274,16 @@ function Register-IDM {
         New-Item -Path $entry.Path -Force -ErrorAction SilentlyContinue | Out-Null
         Set-ItemProperty -Path $entry.Path -Name $entry.Name -Value $entry.Value -Type String -Force
         Write-Color "Set: $($entry.Name) = $($entry.Value)" "Green"
+    }
+
+    # Set registry values for HKU if not synced
+    if ($hkcuSync -eq $false) {
+        $hkuPath = "Registry::HKEY_USERS\$userSid\SOFTWARE\DownloadManager"
+        foreach ($entry in $regEntries) {
+            New-Item -Path $hkuPath -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path $hkuPath -Name $entry.Name -Value $entry.Value -Type String -Force
+            Write-Color "Set (HKU): $($entry.Name) = $($entry.Value)" "Green"
+        }
     }
 }
 
