@@ -20,6 +20,8 @@ call :parseCommandLineArguments
 call :validateSystemRequirements
 call :setupScriptEnvironment
 call :checkForUpdates
+call :validatePowerShellAndPrivileges
+call :configureConsoleSettings
 call :initializeSystemComponents
 call :setupRegistryConfiguration
 call :routeToOperation
@@ -226,17 +228,12 @@ echo "!scriptFullPath!" | find /i "!tempDirectory!" %redirectToNull1% && (
 goto :eof
 
 ::========================================================================================================================================
-:: MAIN OPERATIONS EXECUTION
+:: POWERSHELL VALIDATION AND PRIVILEGE CHECK
 ::========================================================================================================================================
 
-:executeMainOperations
-:: Purpose: Execute the main script logic based on configuration and user choices
+:: Purpose: Validate PowerShell execution and ensure administrator privileges
 
-::========================================================================================================================================
-:: POWERSHELL VALIDATION
-::========================================================================================================================================
-
-:: Purpose: Ensure PowerShell execution policy allows script operations
+:validatePowerShellAndPrivileges
 REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
 
 %powershellExecutable% "$f=[io.file]::ReadAllText('!scriptPathForPS!') -split ':PowerShellTest:\s*';iex ($f[1])" | find /i "FullLanguage" %redirectToNull1% || (
@@ -250,12 +247,6 @@ REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest
     goto :exitWithError
 )
 
-::========================================================================================================================================
-:: PRIVILEGE ELEVATION CHECK
-::========================================================================================================================================
-
-:: Purpose: Ensure script runs with administrator privileges
-
 %redirectToNull1% fltmc || (
     if not defined elevatedMode %powershellExecutable% "start cmd.exe -arg '/c \"!powerShellArgs!\"' -verb runas" && exit /b
     %errorLineColored%
@@ -263,6 +254,8 @@ REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest
     echo Right-click the script and select 'Run as administrator'.
     goto :exitWithError
 )
+
+goto :eof
 
 ::========================================================================================================================================
 :: CONSOLE CONFIGURATION
@@ -914,6 +907,51 @@ goto :waitForDownloadCompletion
 
 :addRegistryEntry
 reg add %registryEntry% /f %redirectToNull%
+
+goto :eof
+
+::========================================================================================================================================
+:: REQUIRED REGISTRY KEY ADDITION
+::========================================================================================================================================
+
+:: Purpose: Add required registry key for IDM functionality
+
+:addRequiredRegistryKey
+echo:
+echo Adding required registry key...
+echo:
+
+set "requiredRegistryKey="%idmRegistryPath%" /v "AdvIntDriverEnabled2""
+
+reg add %requiredRegistryKey% /t REG_DWORD /d "1" /f %redirectToNull%
+
+if "%errorlevel%"=="0" (
+    set "reg=%requiredRegistryKey:"=%
+    echo Added - !reg!
+) else (
+    set "reg=%requiredRegistryKey:"=%
+    call :displayColoredText2 %colorRed% "Failed - !reg!"
+)
+
+goto :eof
+
+::========================================================================================================================================
+:: CLSID REGISTRY SCANNING AND PROCESSING
+::========================================================================================================================================
+
+:: Purpose: Scan and process CLSID registry keys for locking/deletion
+
+:scanAndProcessClsidKeys
+set operationType=%1
+
+if not defined hkcuRegistrySync set hkcuRegistrySync=0
+if "%hkcuRegistrySync%"=="$null" set hkcuRegistrySync=0
+
+if /i "%operationType%"=="delete" (
+    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = $null; $deleteKey = 1; $f=[io.file]::ReadAllText('!scriptPathForPS!') -split ':regscan\:.*';iex ($f[1])"
+) else (
+    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = 1; $deleteKey = $null; $toggle = 1; $f=[io.file]::ReadAllText('!scriptPathForPS!') -split ':regscan\:.*';iex ($f[1])"
+)
 
 goto :eof
 
