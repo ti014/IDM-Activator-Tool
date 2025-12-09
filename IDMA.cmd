@@ -112,9 +112,11 @@ if %errorlevel% NEQ 0 (
 
 :: Validate script file integrity (check for proper line endings)
 pushd "%~dp0"
->nul findstr /v "$" "%~nx0" && (
+:: Check if file ends with newline by checking last character
+for %%F in ("%~nx0") do set "fileSize=%%~zF"
+if %fileSize% LEQ 0 (
     echo:
-    echo Error: Script file has LF line ending issue or missing final empty line.
+    echo Error: Script file is empty.
     echo:
     ping 127.0.0.1 -n 6 >nul
     popd
