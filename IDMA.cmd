@@ -236,7 +236,11 @@ goto :eof
 :validatePowerShellAndPrivileges
 REM :PowerShellTest: $ExecutionContext.SessionState.LanguageMode :PowerShellTest:
 
-%powershellExecutable% "$f=[io.file]::ReadAllText('!scriptPathForPS!') -split ':PowerShellTest:\s*';iex ($f[1])" | find /i "FullLanguage" %redirectToNull1% || (
+:: Use scriptFullPath directly with proper escaping
+set "psTestPath=%scriptFullPath%"
+set "psTestPath=%psTestPath:'=''%"
+
+%powershellExecutable% "$f=[io.file]::ReadAllText('%psTestPath%') -split ':PowerShellTest:\s*';iex ($f[1])" | find /i "FullLanguage" %redirectToNull1% || (
     %errorLineColored%
     %powershellExecutable% $ExecutionContext.SessionState.LanguageMode
     echo:
@@ -947,10 +951,15 @@ set operationType=%1
 if not defined hkcuRegistrySync set hkcuRegistrySync=0
 if "%hkcuRegistrySync%"=="$null" set hkcuRegistrySync=0
 
+:: Use scriptFullPath directly - it's set before delayed expansion, so % works
+:: Escape single quotes for PowerShell
+set "psPath=%scriptFullPath%"
+set "psPath=%psPath:'=''%"
+
 if /i "%operationType%"=="delete" (
-    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = $null; $deleteKey = 1; $f=[io.file]::ReadAllText('!scriptPathForPS!') -split ':regscan\:.*';iex ($f[1])"
+    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = $null; $deleteKey = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])"
 ) else (
-    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = 1; $deleteKey = $null; $toggle = 1; $f=[io.file]::ReadAllText('!scriptPathForPS!') -split ':regscan\:.*';iex ($f[1])"
+    %powershellExecutable% "$sid = '%userAccountSid%'; $HKCUsync = if ('%hkcuRegistrySync%' -eq '1') { 1 } else { $null }; $lockKey = 1; $deleteKey = $null; $toggle = 1; $f=[io.file]::ReadAllText('%psPath%') -split ':regscan\:.*';iex ($f[1])"
 )
 
 goto :eof
