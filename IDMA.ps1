@@ -308,12 +308,25 @@ function Trigger-Downloads {
     # Clean up any existing temp file
     if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
 
-    # Trigger downloads without waiting (non-blocking)
+    # Trigger downloads - use background job to auto-dismiss admin warning dialog
     foreach ($url in $urls) {
         try {
-            # Start download process without waiting
-            Start-Process -FilePath $idmPath -ArgumentList "/n", "/d", "`"$url`"", "/p", "`"$env:SystemRoot\Temp`"", "/f", "temp.png" -WindowStyle Hidden -ErrorAction SilentlyContinue
-            Start-Sleep -Milliseconds 500
+            # Start IDM download process
+            $proc = Start-Process -FilePath $idmPath -ArgumentList "/n", "/d", "`"$url`"", "/p", "`"$env:SystemRoot\Temp`"", "/f", "temp.png" -WindowStyle Hidden -PassThru -ErrorAction SilentlyContinue
+            
+            if ($proc) {
+                # Auto-dismiss admin warning dialog in background
+                Start-Job -ScriptBlock {
+                    param($procId)
+                    Start-Sleep -Milliseconds 1000
+                    Add-Type -AssemblyName System.Windows.Forms
+                    $wsh = New-Object -ComObject WScript.Shell
+                    # Send Enter key to dismiss dialog
+                    $wsh.SendKeys("{ENTER}")
+                } -ArgumentList $proc.Id | Out-Null
+            }
+            
+            Start-Sleep -Milliseconds 600
         } catch {
             Write-Color "Warning: Could not trigger download for $url" "Yellow"
         }
