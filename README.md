@@ -34,13 +34,24 @@ Script sẽ tự động:
 
 ```powershell
 # Reset IDM về trạng thái ban đầu
-iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex -Reset
+$script = iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1; Invoke-Expression $script.Content -Reset
 
 # Activate với serial giả (ít ổn định hơn)
-iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex -Activate
+$script = iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1; Invoke-Expression $script.Content -Activate
 
 # Bỏ qua phần trigger downloads (không khuyến nghị)
-iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex -SkipDownloads
+$script = iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1; Invoke-Expression $script.Content -SkipDownloads
+```
+
+**Hoặc download về và chạy trực tiếp:**
+```powershell
+# Download file
+iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 -OutFile IDMA.ps1
+
+# Chạy với tham số
+.\IDMA.ps1 -SkipDownloads
+.\IDMA.ps1 -Reset
+.\IDMA.ps1 -Activate
 ```
 
 ## Tính năng
