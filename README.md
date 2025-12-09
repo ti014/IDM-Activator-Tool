@@ -6,22 +6,20 @@ Một công cụ kích hoạt Internet Download Manager (IDM) đơn giản và m
 
 ### Phương pháp 1: One-liner PowerShell (Khuyến nghị - Chỉ cần copy & paste)
 ```powershell
-# ⚠️ LƯU Ý: Truy cập http://lamtiai.me/IDM-Activator/IDMA.ps1 bằng browser trước để bypass Cloudflare
-
 # Kích hoạt IDM (Freeze Trial) - Mặc định
-iwr -useb http://lamtiai.me/IDM-Activator/IDMA.ps1 -AllowInsecureRedirect | iex
+iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1 | iex
 
 # Reset IDM
-& { $script = iwr -useb http://lamtiai.me/IDM-Activator/IDMA.ps1 -AllowInsecureRedirect; Invoke-Expression $script.Content -Reset }
+& { $script = iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1; Invoke-Expression $script.Content -Reset }
 
 # Activate với serial giả
-& { $script = iwr -useb http://lamtiai.me/IDM-Activator/IDMA.ps1 -AllowInsecureRedirect; Invoke-Expression $script.Content -Activate }
+& { $script = iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1; Invoke-Expression $script.Content -Activate }
 ```
 
 ### Phương pháp 2: Download và chạy trực tiếp
 ```bash
 # Download file
-wget http://lamtiai.me/IDM-Activator/IDMA.ps1 -O IDMA.ps1
+wget https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1 -O IDMA.ps1
 
 # Chạy với PowerShell
 powershell -ExecutionPolicy Bypass -File IDMA.ps1                    # Freeze Trial (mặc định)
