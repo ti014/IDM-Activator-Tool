@@ -7,7 +7,7 @@ Một công cụ kích hoạt Internet Download Manager (IDM) đơn giản và m
 ### 🚀 **CHỈ CẦN 1 LỆNH DUY NHẤT:**
 
 ```powershell
-iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex
 ```
 
 **Copy & paste lệnh trên vào PowerShell với quyền Administrator và nhấn Enter!**
@@ -26,10 +26,10 @@ Script sẽ tự động:
 
 ```powershell
 # Reset IDM về trạng thái ban đầu
-iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1 | iex -Reset
+iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex -Reset
 
 # Activate với serial giả (ít ổn định hơn)
-iwr -useb https://ti014.github.io/IDM-Activator-Tool/IDMA.ps1 | iex -Activate
+iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex -Activate
 ```
 
 ## Tính năng
