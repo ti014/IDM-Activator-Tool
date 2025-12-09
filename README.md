@@ -20,7 +20,10 @@ Script sẽ tự động:
 - ✅ Phát hiện và đóng IDM nếu đang chạy
 - ✅ Backup registry trước khi thay đổi
 - ✅ Freeze trial IDM vĩnh viễn (không cần activate phức tạp)
+- ✅ Trigger downloads nhỏ để tạo registry keys cần thiết (tự động xóa sau)
 - ✅ Thông báo kết quả chi tiết
+
+**Lưu ý:** Script sẽ tự động tải 3 file nhỏ từ IDM website để trigger registry keys. Đây là cần thiết cho quá trình kích hoạt. Files sẽ tự động bị xóa sau khi hoàn thành.
 
 ### 🎯 **Nếu cần tùy chọn khác:**
 
@@ -30,6 +33,9 @@ iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.p
 
 # Activate với serial giả (ít ổn định hơn)
 iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex -Activate
+
+# Bỏ qua phần trigger downloads (không khuyến nghị)
+iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex -SkipDownloads
 ```
 
 ## Tính năng

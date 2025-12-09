@@ -4,7 +4,8 @@
 param(
     [switch]$Reset,
     [switch]$Freeze,
-    [switch]$Activate
+    [switch]$Activate,
+    [switch]$SkipDownloads
 )
 
 # Configuration
@@ -76,11 +77,32 @@ function Backup-Registry {
     $backupPath = "$env:SystemRoot\Temp\_Backup_IDM_$timestamp.reg"
 
     Write-Color "Creating registry backup..." "Yellow"
-    reg export $clsidPath $backupPath | Out-Null
-    if (Test-Path $clsidPathHKU) {
-        reg export $clsidPathHKU "$env:SystemRoot\Temp\_Backup_IDM_HKU_$timestamp.reg" | Out-Null
+    
+    # Convert PowerShell registry path to reg.exe format
+    $regPath = $clsidPath -replace "HKCU:", "HKEY_CURRENT_USER" -replace "HKLM:", "HKEY_LOCAL_MACHINE" -replace "HKU:", "HKEY_USERS"
+    
+    try {
+        reg export $regPath $backupPath 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Color "Backup saved to: $backupPath" "Green"
+        }
+    } catch {
+        Write-Color "Warning: Could not backup registry (this is usually safe to ignore)" "Yellow"
     }
-    Write-Color "Backup saved to: $backupPath" "Green"
+    
+    # Backup HKU path if different
+    if ($clsidPathHKU -and ($clsidPathHKU -ne $clsidPath)) {
+        $regPathHKU = $clsidPathHKU -replace "Registry::HKEY_USERS", "HKEY_USERS"
+        $backupPathHKU = "$env:SystemRoot\Temp\_Backup_IDM_HKU_$timestamp.reg"
+        try {
+            reg export $regPathHKU $backupPathHKU 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Color "Backup saved to: $backupPathHKU" "Green"
+            }
+        } catch {
+            # Silent fail for HKU backup
+        }
+    }
 }
 
 function Reset-IDM {
@@ -286,14 +308,22 @@ if ($Reset) {
     Stop-Process -Name "idman" -Force -ErrorAction SilentlyContinue
     Backup-Registry
     Register-IDM
-    Trigger-Downloads
+    if (-not $SkipDownloads) {
+        Trigger-Downloads
+    } else {
+        Write-Color "Skipping downloads (using -SkipDownloads parameter)" "Yellow"
+    }
     Process-CLSIDKeys
     Write-Color "IDM Activation completed!" "Green"
 } elseif ($Freeze) {
     Write-Color "Starting IDM Trial Freeze..." "Cyan"
     Stop-Process -Name "idman" -Force -ErrorAction SilentlyContinue
     Backup-Registry
-    Trigger-Downloads
+    if (-not $SkipDownloads) {
+        Trigger-Downloads
+    } else {
+        Write-Color "Skipping downloads (using -SkipDownloads parameter)" "Yellow"
+    }
     Process-CLSIDKeys
     Write-Color "IDM Trial frozen for lifetime!" "Green"
 } else {
@@ -301,7 +331,11 @@ if ($Reset) {
     Write-Color "No parameter specified. Defaulting to Freeze Trial..." "Yellow"
     Stop-Process -Name "idman" -Force -ErrorAction SilentlyContinue
     Backup-Registry
-    Trigger-Downloads
+    if (-not $SkipDownloads) {
+        Trigger-Downloads
+    } else {
+        Write-Color "Skipping downloads (using -SkipDownloads parameter)" "Yellow"
+    }
     Process-CLSIDKeys
     Write-Color "IDM Trial frozen for lifetime!" "Green"
 }
