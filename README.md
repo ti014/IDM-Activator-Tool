@@ -32,18 +32,19 @@ Script sẽ tự động:
 
 ### 🎯 **Nếu cần tùy chọn khác:**
 
+**Cách 1: Dùng Environment Variables (One-liner)**
 ```powershell
 # Reset IDM về trạng thái ban đầu
-$script = iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1; Invoke-Expression $script.Content -Reset
+$env:IDMA_RESET="1"; iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex
 
 # Activate với serial giả (ít ổn định hơn)
-$script = iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1; Invoke-Expression $script.Content -Activate
+$env:IDMA_ACTIVATE="1"; iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex
 
 # Bỏ qua phần trigger downloads (không khuyến nghị)
-$script = iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1; Invoke-Expression $script.Content -SkipDownloads
+$env:IDMA_SKIP_DOWNLOADS="1"; iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 | iex
 ```
 
-**Hoặc download về và chạy trực tiếp:**
+**Cách 2: Download về và chạy trực tiếp (Khuyến nghị)**
 ```powershell
 # Download file
 iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.ps1 -OutFile IDMA.ps1
@@ -52,6 +53,7 @@ iwr -useb https://raw.githubusercontent.com/ti014/IDM-Activator-Tool/main/IDMA.p
 .\IDMA.ps1 -SkipDownloads
 .\IDMA.ps1 -Reset
 .\IDMA.ps1 -Activate
+.\IDMA.ps1 -Freeze
 ```
 
 ## Tính năng

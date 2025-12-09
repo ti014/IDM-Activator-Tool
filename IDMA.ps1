@@ -8,6 +8,12 @@ param(
     [switch]$SkipDownloads
 )
 
+# Support environment variables for one-liner usage
+if ($env:IDMA_RESET -eq "1") { $Reset = $true }
+if ($env:IDMA_FREEZE -eq "1") { $Freeze = $true }
+if ($env:IDMA_ACTIVATE -eq "1") { $Activate = $true }
+if ($env:IDMA_SKIP_DOWNLOADS -eq "1") { $SkipDownloads = $true }
+
 # Configuration
 $scriptVersion = "1.2"
 $supportUrl = "https://massgrave.dev/idm-activation-script.html#Troubleshoot"
